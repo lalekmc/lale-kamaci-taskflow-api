@@ -1,0 +1,491 @@
+{
+  "info": {
+    "name": "TaskFlow API",
+    "description": "TaskFlow Görev ve Proje Yönetim Sistemi - CRUD ve Raporlama testleri. Klasörleri sırayla çalıştırın (Run collection).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. API Durumu (GET /)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"API çalışıyor\", () => pm.expect(pm.response.json().success).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "Görev CRUD",
+      "item": [
+        {
+          "name": "1. Görev Ekle (POST /tasks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Görev oluşturuldu ve id döndü\", () => {",
+                  "  pm.expect(res.success).to.eql(true);",
+                  "  pm.expect(res.data.id).to.be.a(\"number\");",
+                  "  pm.expect(res.data.title).to.eql(\"Postman ile oluşturulan görev\");",
+                  "  pm.expect(res.data.status).to.eql(\"pending\");",
+                  "});",
+                  "pm.collectionVariables.set(\"taskId\", res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman ile oluşturulan görev\",\n  \"description\": \"CRUD testi için örnek görev\",\n  \"priority\": \"high\",\n  \"assignee\": \"lale\",\n  \"project\": \"TaskFlow\",\n  \"dueDate\": \"2026-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2. Görev Ekle - Eksik title (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Hata mesajı döndü\", () => pm.expect(pm.response.json().message).to.include(\"title\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"title alanı yok\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3. Görevleri Listele (GET /tasks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Görev listesi dizi olarak döndü\", () => {",
+                  "  pm.expect(res.data).to.be.an(\"array\");",
+                  "  pm.expect(res.count).to.eql(res.data.length);",
+                  "});",
+                  "pm.test(\"Yeni eklenen görev listede var\", () => {",
+                  "  const id = Number(pm.collectionVariables.get(\"taskId\"));",
+                  "  pm.expect(res.data.some(t => t.id === id)).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Görev Detayı (GET /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Doğru görev döndü\", () => {",
+                  "  pm.expect(pm.response.json().data.id).to.eql(Number(pm.collectionVariables.get(\"taskId\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Görev Detayı - Olmayan id (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/99999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "99999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Görev Güncelle (PUT /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Alanlar güncellendi\", () => {",
+                  "  pm.expect(res.data.status).to.eql(\"completed\");",
+                  "  pm.expect(res.data.title).to.eql(\"Postman ile güncellenen görev\");",
+                  "  pm.expect(res.data.priority).to.eql(\"medium\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman ile güncellenen görev\",\n  \"status\": \"completed\",\n  \"priority\": \"medium\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "7. Görev Güncelle - Geçersiz status (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"bitti\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Raporlama",
+      "item": [
+        {
+          "name": "Tamamlanan Görev Sayısı (GET /reports/completed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test(\"count, listedeki görev sayısına eşit\", () => pm.expect(d.count).to.eql(d.tasks.length));",
+                  "pm.test(\"Tüm görevler completed durumda\", () => pm.expect(d.tasks.every(t => t.status === \"completed\")).to.eql(true));",
+                  "pm.test(\"Güncellenen görev tamamlananlarda\", () => {",
+                  "  pm.expect(d.tasks.some(t => t.id === Number(pm.collectionVariables.get(\"taskId\")))).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/completed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "completed"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bekleyen Görev Sayısı (GET /reports/pending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test(\"count, listedeki görev sayısına eşit\", () => pm.expect(d.count).to.eql(d.tasks.length));",
+                  "pm.test(\"Tüm görevler pending durumda\", () => pm.expect(d.tasks.every(t => t.status === \"pending\")).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Genel Sistem Özeti (GET /reports/summary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test(\"Durum sayıları toplamı toplam görev sayısına eşit\", () => {",
+                  "  pm.expect(d.completedTasks + d.pendingTasks + d.inProgressTasks).to.eql(d.totalTasks);",
+                  "});",
+                  "pm.test(\"Tamamlanma oranı doğru hesaplandı\", () => {",
+                  "  const expected = d.totalTasks ? Math.round(d.completedTasks / d.totalTasks * 10000) / 100 : 0;",
+                  "  pm.expect(d.completionRate).to.eql(expected);",
+                  "});",
+                  "pm.test(\"Öncelik dağılımı mevcut\", () => pm.expect(d.byPriority).to.have.keys(\"low\", \"medium\", \"high\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "summary"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Görev Silme",
+      "item": [
+        {
+          "name": "8. Görev Sil (DELETE /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Silinen görev döndü\", () => pm.expect(pm.response.json().data.id).to.eql(Number(pm.collectionVariables.get(\"taskId\"))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. Silinen Görev Detayı (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Silinen görev artık bulunamıyor (404)\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "{{taskId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "taskId",
+      "value": ""
+    }
+  ]
+}
